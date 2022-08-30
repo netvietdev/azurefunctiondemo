@@ -7,6 +7,9 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Data;
+using System.Data.SqlClient;
+using Dapper;
 
 namespace FunctionAppDemo
 {
@@ -31,7 +34,20 @@ namespace FunctionAppDemo
                 ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
                 : $"Hello, {name}. This HTTP triggered function executed successfully at {serverTime}.";
 
+            var nbRows = QueryDatabase();
+            responseMessage += $"Connecting to database and then perform an update query... Updated rows = {nbRows}";
+
             return new OkObjectResult(responseMessage);
+        }
+
+        private static int QueryDatabase()
+        {
+            var connectionString = Environment.GetEnvironmentVariable("DefaultDb");
+            const string sql = "UPDATE [Item] SET [UpdatedAt] = GETDATE()";
+            using (IDbConnection connection = new SqlConnection(connectionString))
+            {
+                return connection.Execute(sql);
+            }
         }
     }
 }
